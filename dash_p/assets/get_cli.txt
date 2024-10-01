@@ -1,0 +1,547 @@
+<?php
+session_start();
+include "php/config.php";
+
+if (!isset($_SESSION['admin_uni_id'])) {
+    echo "<script>alert('You must login first.')</script>";
+    echo "<script>window.location.href = '../default/login.php'</script>";
+} else {
+    $selectuser = mysqli_query($con, "SELECT * FROM `users` WHERE `Unique_id` = {$_SESSION['admin_uni_id']}");
+    $user = mysqli_fetch_assoc($selectuser);
+    $unid = $user['Unique_id'];
+    $role = $user['Role'];
+    $fname = $user['FirstName'];
+    $names = $user['FirstName'] . ' ' . $user['LastName'];
+}
+$user_uniqueid = $user['UserId'];
+if ($user['Access'] == 'Revoked' || $user['Access'] != 'Granted') {
+    echo "<script>window.location.href = '../default/php/notify.php'</script>";
+}
+
+$countReissuedTickets = mysqli_query($con, "SELECT DISTINCT(Id) FROM `reissued_ticket`");
+$displayReIssuedTickets = mysqli_num_rows($countReissuedTickets);
+
+if (isset($_POST['submit_checked_box'])) {
+
+    $cashsign = $_POST['cashsign'];
+    $invoice = $_POST['invoice'];
+    $invoice_ref = $_POST['invoice_ref'];
+
+    if (empty($invoice_ref)) {
+        $invRef = 'no_invoice_ref';
+    } else {
+        $invRef = $invoice_ref;
+    }
+
+    if (isset($_POST['e_ticket_id'])) {
+        $all_checked_box = $_POST['e_ticket_id'];
+        $extract_id = implode(',', $all_checked_box);
+        // echo $extract_id;
+
+        // header("Location: cli_report_reissued.php?e_ticket_records=$extract_id");
+
+        // foreach ($all_checked_box as $checked_box) {
+        //     echo "$checked_box";
+        // }
+    }
+
+    // echo "<br>";
+
+    if (isset($_POST['reissued_ticket_id'])) {
+        $all_reissued_checked_box = $_POST['reissued_ticket_id'];
+        $extract_reissued_id = implode(',', $all_reissued_checked_box);
+        // echo $extract_reissued_id;
+    }
+
+    if (isset($_POST['e_ticket_id']) && isset($_POST['reissued_ticket_id'])) {
+        header("Location: cli_report_reissued.php?e_ticket_records=$extract_id&reissued_ticket_records=$extract_reissued_id&invoiceOpt=$invoice&cashsignOpt=$cashsign&invoice_refOpt=$invRef");
+    } elseif (isset($_POST['e_ticket_id']) && !isset($_POST['reissued_ticket_id'])) {
+        header("Location: cli_report_reissued.php?e_ticket_records=$extract_id&reissued_ticket_records=reissued_not_isset&invoiceOpt=$invoice&cashsignOpt=$cashsign&invoice_refOpt=$invRef");
+    } elseif (isset($_POST['reissued_ticket_id']) && !isset($_POST['e_ticket_id'])) {
+        header("Location: cli_report_reissued.php?e_ticket_records=e_ticket_not_isset&reissued_ticket_records=$extract_reissued_id&invoiceOpt=$invoice&cashsignOpt=$cashsign&invoice_refOpt=$invRef");
+    } else {
+        echo "<script>alert('No records selected. Please select record and click on Report Button.')</script>";
+        echo "<script>window.location.href = 'get_cli_report.php'</script>";
+    }
+}
+
+
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 
+        Contents and all features developed in this system.
+        Prepared and developed by @Prince Parfait - +(250) 7 9205 4846
+        Email Address: ganzaparfait7@gmail.com
+     -->
+
+    <link rel="stylesheet" href="extensions/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="extensions/bootstrap/js/bootstrap.bundle.min.js">
+    <link rel="stylesheet" href="extensions/fontawesome/css/all.css">
+    <link rel="icon" href="assets/images/logo.png">
+    <link rel="stylesheet" href="assets/css/main.css">
+
+    <!-- 
+        *****************************************************************
+
+            ___________________________
+
+                All Assets from assets/folder/to/in/this/file...
+            ___________________________
+
+        *****************************************************************
+      -->
+    <title>PSTA - System</title>
+</head>
+
+<body>
+    <div class="body-contents-wrapper">
+        <div class="asideBar active">
+            <header class="asideHeader">
+                <img src="assets/images/logo.png" alt="logo">
+                <i class="fa-solid fa-times closeAsidebarBtn"></i>
+            </header>
+
+            <div class="sideLinks">
+                <a href="./index.php">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#" class="linkDropDown active">
+                    <i class="fa-solid fa-server"></i>
+                    <span>Tickets</span>
+                </a>
+                <div class="dropedLinks">
+                    <a href="addticket.php">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>New</span>
+                    </a>
+                    <a href="view_reissued_tickets.php" class="active">
+                        <i class="fa-solid fa-ticket"></i>
+                        <span>Ticket ReIssue</span>
+                    </a>
+                    <a href="view_refunded_tickets.php">
+                        <i class="fa-solid fa-money-bill-transfer"></i>
+                        <span>Ticket Refund</span>
+                    </a>
+                    <a href="voided_ticket.php">
+                        <i class="fa-solid fa-v"></i>
+                        <span>Ticket Void</span>
+                    </a>
+                </div>
+                <a href="view_tickets.php">
+                    <i class="fa-solid fa-table"></i>
+                    <span>Manage Tickets</span>
+                </a>
+                <a href="airline_codes.php">
+                    <i class="fa-solid fa-p"></i>
+                    <span>Airport Codes</span>
+                </a>
+                <a href="airline_codes_2.php">
+                    <i class="fa-solid fa-a"></i>
+                    <span>Airline Codes</span>
+                </a>
+                <a href="view_company.php">
+                    <i class="fa-solid fa-industry"></i>
+                    <span>Companies</span>
+                </a>
+                <a href="activities.php">
+                    <i class="fa-solid fa-tasks"></i>
+                    <span>Activities</span>
+                </a>
+                <a href="report_category.php">
+                    <i class="fa-solid fa-flag"></i>
+                    <span>Report</span>
+                </a>
+                <a href="access_control.php">
+                    <i class="fa-solid fa-user-secret"></i>
+                    <span>Access Control</span>
+                </a>
+                <a href="manage_users.php">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="settings.php">
+                    <i class="fa-solid fa-cogs"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="php/extras/logout.php">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log Out</span>
+                </a>
+            </div>
+        </div>
+        <div class="asideBarBacDrop"></div>
+
+        <div class="contents active">
+            <div class="top-header-contents active">
+                <div class="left-top-header-contents sub-header-contentes">
+                    <i class="fa-solid fa-bars-staggered toggleAsidebar"></i>
+                    <span class="closeAside">
+                        <i class="fa-solid fa-bars"></i>
+                    </span>
+                </div>
+                <a href="index.php" class="companyTitle">
+                    PSTA
+                </a>
+                <div class="right-top-header-contents sub-header-contentes">
+                    <a href="settings.php" style="text-decoration: none;">
+                        <i class="fa-solid fa-cog top-header-cog"></i>
+                    </a>
+                    <?php
+                    $profile = 'php/userimages/' . $user['Profile'] . '';
+                    $default_image_url = '<img src="php/defaultavatar/avatar.png" alt="avatar">';
+
+
+                    if ($user['Profile'] == '') {
+                        echo $default_image_url;
+                    } elseif (file_exists($profile)) {
+                        echo '<a href="' . $profile . '" target="_blank"><img src="' . $profile . '" alt="profile"></a>';
+                    } else {
+                        echo $default_image_url;
+                    }
+                    ?>
+                    <p>
+                        <a href="settings.php" class="text-dark" style="text-decoration: none;">
+                            <span class="userTitle">
+                                <?= ucfirst($role); ?>,
+                            </span>
+                            <?= $names; ?></a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="cont-container">
+                <form action="get_cli_report.php" method="post">
+                    <div class="table-container">
+                        <div class="table-header-contents" style="position: relative;">
+                            <div class="form-header-content">
+                                <div class="left-content mb-2">
+                                    <h4><i class="fa-solid fa-users"></i> Search Client And / Generate Report</h4>
+                                    <small class="text-muted">Search, and generate a report for any passenger easily
+                                        from here.</small>
+                                </div>
+                            </div>
+                            <div class="right-table-content">
+                                <button type="submit" name="submit_checked_box"
+                                    class="btn btn-primary btn-sm rigthPosition"><i class="fa-solid fa-arrow-right"></i>
+                                    Report</button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="search-record-container mb-3">
+                                    <div class="uuu">
+                                        <input type="search" name="search" id="searchInput" placeholder="Search..."
+                                            class="form-control" style="border: 1px solid blue">
+                                        <i class="fa-solid fa-search faSearch"></i>
+                                    </div>
+                                    <div>
+                                        <!-- <button type="submit" name="search" class="btn btn-primary"><i
+                                        class="fa-solid fa-search"></i></button> -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8 mb-2">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <select name="cashsign" class="form-control">
+                                            <option value="cash">Cash sign available</option>
+                                            <option value="no_cash">No Cash sign available</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" name="invoice_ref" placeholder="Enter invoice ref... or leave empty" class="form-control">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select name="invoice" class="form-control">
+                                            <option value="no_invoice" selected hidden>Select if it is invoice or not...</option>
+                                            <option value="invoice">Invoice</option>
+                                            <option value="no_invoice">Not Invoice</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <?php
+                        if (isset($_GET['msg'])) {
+                            ?>
+                            <div class="alert alert-primary alert-dismissible fade show mt-3" role="alert"
+                                onclick="this.style.display = 'none'">
+                                <strong>Notice!</strong>
+                                <?= $_GET['msg']; ?>
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <?php
+                        } else {
+                            echo "";
+                        }
+                        ?>
+                        <div class="pure-table">
+                            <table class="table table-hover pureTable data-table table nowrap" id="myTable">
+                                <thead class="bg-dark text-light">
+                                    <th><input type="checkbox" name="checkAll" id="checkAll"></th>
+                                    <th>#</th>
+                                    <th>Passenger</th>
+                                    <th>Passport</th>
+                                    <th>Company</th>
+                                    <th>TicketNumber</th>
+                                    <th>Itinerary</th>
+                                    <th>TicketPrice</th> <!-- This is the ticket price that contains the system price 
+                                without system commission plus owner added commission -->
+                                    <th>ReIssueFees</th>
+                                    <th>OwnerReIssueFees</th>
+                                    <th>IssueDate</th>
+                                    <th>Status</th>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $c = 1;
+                                    $getTickets = mysqli_query($con, "SELECT * FROM `tickets`
+                                INNER JOIN company ON tickets.C_Id = company.C_Id WHERE tickets.isDeleted = 'notDeleted'");
+                                    if (mysqli_num_rows($getTickets) > 0) {
+                                        while ($ticket = mysqli_fetch_assoc($getTickets)) {
+                                            $R_Id = $ticket['Id'];
+                                            $checkIfReIssued = mysqli_query($con, "SELECT * FROM `reissued_ticket` WHERE `Id` = '$R_Id'");
+                                            $checkIfReIssued_row = mysqli_fetch_assoc($checkIfReIssued);
+
+                                            // ************************************ Check If Ticket was ever refunded *****************************
+                                    
+                                            $checkIfRefunded_to_avoid_reissue = mysqli_query($con, "SELECT * FROM `refunded_ticket` WHERE `Id` = '$R_Id'");
+                                            $checkIfRefunded_to_avoid_reissue_row = mysqli_fetch_assoc($checkIfRefunded_to_avoid_reissue);
+
+                                            // ************************************ Check If Ticket voided *****************************
+                                    
+                                            $checkIfVoided = mysqli_query($con, "SELECT * FROM `voided_ticket` WHERE `Id` = '$R_Id'");
+                                            $checkIfVoided_row = mysqli_fetch_assoc($checkIfVoided);
+                                            ?>
+                                            <tr>
+                                                <?php
+                                                if (mysqli_num_rows($checkIfVoided) > 0) {
+                                                    ?>
+                                                    <td><input type="checkbox" disabled></td>
+                                                    <?php
+                                                } else {
+                                                    ?>
+                                                    <td><input type="checkbox" name="e_ticket_id[]" class="checkItem"
+                                                            value="<?= $ticket['Id']; ?>"></td>
+                                                    <?php
+                                                }
+                                                ?>
+                                                <td>
+                                                    <?= $c++; ?>
+                                                </td>
+                                                <td>
+                                                    <?= $ticket['PassengerName']; ?>
+                                                </td>
+                                                <td>
+                                                    <?= $ticket['PassportNumber']; ?>
+                                                </td>
+                                                <td>
+                                                    <?= $ticket['CompanyName']; ?>
+                                                </td>
+                                                <td>
+                                                    <?= $ticket['TicketNumber']; ?>
+                                                </td>
+                                                <td>
+                                                    <?= $ticket['Itinerary']; ?>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    $ownerCommission = $ticket['TicketOwnerCommission'];
+                                                    $TicketSysPriceCal = $ticket['TicketSysPrice'];
+
+                                                    $ticketPriceCal = $ownerCommission + $TicketSysPriceCal;
+
+                                                    if ($ticket['MoneyType'] == 'Rwf') {
+                                                        ?>
+                                                        <?= number_format($ticketPriceCal) . '' . $ticket['MoneyType']; ?>
+                                                        <?php
+                                                    } else {
+                                                        ?>
+                                                        <?= $ticket['MoneyType'] . '' . number_format($ticketPriceCal); ?>
+                                                        <?php
+                                                    }
+                                                    ?>
+                                                </td>
+                                                <td>---</td>
+                                                <td>---</td>
+                                                <td>
+                                                    <?= $ticket['IssueDate']; ?>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    if ($ticket['Status'] == 'Paid') {
+                                                        ?>
+                                                        <span class="statusBtn statusBtnGreen">
+                                                            <?= $ticket['Status']; ?>
+                                                        </span>
+                                                        <?php
+                                                    } elseif ($ticket['Status'] == 'Not_Paid') {
+                                                        ?>
+                                                        <span class="statusBtn statusBtnRed">
+                                                            <?= $ticket['Status']; ?>
+                                                        </span>
+                                                        <?php
+                                                    } else {
+                                                        ?>
+                                                        <span class="statusBtn">
+                                                            Unknown
+                                                        </span>
+                                                        <?php
+                                                    }
+                                                    ?>
+                                                </td>
+                                            </tr>
+                                            <?php
+
+                                            $cu = 1;
+                                            $countReIssue = 1;
+                                            $cheIfReIssue = mysqli_query($con, "SELECT * FROM `reissued_ticket`
+                                        INNER JOIN company ON reissued_ticket.C_Id = company.C_Id WHERE `Id` = '$R_Id'");
+
+                                            while ($re_reissue = mysqli_fetch_assoc($cheIfReIssue)) {
+                                                ?>
+                                                <tr style="border-left: 1px solid #000;">
+                                                    <?php
+                                                    if (mysqli_num_rows($checkIfVoided) > 0) {
+                                                        ?>
+                                                        <td><input type="checkbox" disabled></td>
+                                                        <?php
+                                                    } else {
+                                                        ?>
+                                                        <td><input type="checkbox" name="reissued_ticket_id[]" class="checkItem"
+                                                                value="<?= $re_reissue['ReIssuedId']; ?>"></td>
+                                                        <?php
+                                                    }
+                                                    ?>
+
+                                                    <td class="statusBtnRed">
+                                                        <?= $cu++; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?= $re_reissue['PassengerName']; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?= $re_reissue['PassportNumber']; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?= $re_reissue['CompanyName']; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?= $re_reissue['TicketNumber']; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?= $re_reissue['Itinerary']; ?>
+                                                    </td>
+                                                    <td>---</td>
+                                                    <td>
+                                                        <?php
+                                                        if ($re_reissue['MoneyType'] == 'Rwf') {
+                                                            echo $re_reissue['ReIssueFees'] . 'Rwf';
+                                                        } elseif ($re_reissue['MoneyType'] == '$') {
+                                                            echo '$' . $re_reissue['ReIssueFees'] . '.00';
+                                                        } else {
+                                                            echo $re_reissue['ReIssueFees'];
+                                                        }
+                                                        ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php
+                                                        if ($re_reissue['OwnerReIssueFee'] == 'N/A') {
+                                                            echo 'N/A';
+                                                        } elseif ($re_reissue['OwnerReIssueFee'] == '') {
+                                                            echo 'N/A';
+                                                        } elseif ($re_reissue['MoneyType'] == 'Rwf') {
+                                                            echo $re_reissue['OwnerReIssueFee'] . 'Rwf';
+                                                        } elseif ($re_reissue['MoneyType'] == '$') {
+                                                            echo '$' . $re_reissue['OwnerReIssueFee'] . '.00';
+                                                        } else {
+                                                            echo $re_reissue['OwnerReIssueFee'];
+                                                        }
+                                                        ?>
+                                                    </td>
+                                                    <td>
+                                                        <?= $re_reissue['IssueDate']; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php
+                                                        if ($re_reissue['Status'] == 'Paid') {
+                                                            ?>
+                                                            <span class="statusBtn statusBtnGreen">
+                                                                <?= $re_reissue['Status']; ?>
+                                                            </span>
+                                                            <?php
+                                                        } elseif ($re_reissue['Status'] == 'Not_Paid') {
+                                                            ?>
+                                                            <span class="statusBtn statusBtnRed">
+                                                                <?= $re_reissue['Status']; ?>
+                                                            </span>
+                                                            <?php
+                                                        } else {
+                                                            ?>
+                                                            <span class="statusBtn">
+                                                                Unknown
+                                                            </span>
+                                                            <?php
+                                                        }
+                                                        ?>
+                                                    </td>
+                                                </tr>
+                                                <?php
+                                            }
+                                        }
+                                    } else {
+                                        $msg[] = "No records found.";
+                                    }
+                                    ?>
+                                </tbody>
+                            </table>
+                            <div id="outputMessage" class="text-center"></div>
+                            <?php
+                            if (isset($msg)) {
+                                foreach ($msg as $printmsg) {
+                                    ?>
+                                    <p class="text-center">
+                                        <?php echo $printmsg; ?>
+                                    </p>
+                                    <?php
+                                }
+                            }
+                            ?>
+                        </div>
+                    </div>
+                </form>
+                <?php include ('php/includes/Rlinks.php'); ?>
+                <?php include ('php/includes/footer.php'); ?>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/searchTable.js"></script>
+    <script src="assets/js/exportToExcel.js"></script>
+    <script src="extensions/Jquery/jquery.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#checkAll').click(function () {
+                if ($(this).is(':checked')) {
+                    $('.checkItem').prop('checked', true);
+                } else {
+                    $('.checkItem').prop('checked', false);
+                }
+            })
+        });
+    </script>
+</body>
+
+</html>

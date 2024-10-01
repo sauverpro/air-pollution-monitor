@@ -1,0 +1,35 @@
+const linkDropDown = document.querySelectorAll('.linkDropDown');
+const dropedLinks = document.querySelectorAll('.dropedLinks');
+const asideBar = document.querySelector('.asideBar');
+const toggleAsidebar = document.querySelector('.toggleAsidebar');
+const asideBarBacDrop = document.querySelector('.asideBarBacDrop');
+const closeAsidebarBtn = document.querySelector('.closeAsidebarBtn');
+
+
+linkDropDown.forEach(function (link) {
+
+    link.addEventListener('click', () => {
+
+        dropedLinks.forEach(function (dropedLink) {
+            dropedLink.classList.toggle('showDropedLinks');
+        });
+        link.classList.toggle('rotateIcon');
+        link.classList.toggle('active');
+    });
+
+});
+
+toggleAsidebar.addEventListener('click', () => {
+    asideBar.classList.add('showAsidebar');
+    asideBarBacDrop.classList.add('active');
+});
+
+closeAsidebarBtn.addEventListener('click', () => {
+    asideBar.classList.remove('showAsidebar');
+    asideBarBacDrop.classList.remove('active');
+});
+
+asideBarBacDrop.onclick = () => {
+    asideBar.classList.remove('showAsidebar');
+    asideBarBacDrop.classList.remove('active');
+}
