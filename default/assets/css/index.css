@@ -1,0 +1,28 @@
+/* 
+
+    Contents and all features developed in this system.
+    Prepared and developed by @Prince Parfait - +(250) 7 9205 4846
+    Email Address: ganzaparfait7@gmail.com
+
+*/
+
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+:root {
+    --main-color: #0000ff;
+    --white-color: #fff;
+    --gray-color: #ccc;
+    --black-color: #000;
+    --text-color: #333;
+    --border-color: #eee;
+    --main-better-color: #bbbbff;
+    --body-background-color: #e6e6e6;
+    --box-shadow-normal: 0 4px 4px 4px rgba(240, 238, 238, 0.3);
+    --box-shadow-darker: 0 4px 4px 4px rgba(224, 224, 224, 0.3);
+}
